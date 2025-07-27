@@ -12,89 +12,71 @@ app.use((req, res, next) => {
   res.set('X-Frame-Options', 'DENY');
   res.set('X-XSS-Protection', '1; mode=block');
   res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+
   // CORS for development
   if (process.env.NODE_ENV === 'development') {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   }
-  
+
   next();
 });
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
-// Serve static files from attached_assets
-app.use('/attached_assets', express.static(path.join(process.cwd(), 'attached_assets')));
-
-// Serve static files from public directory
-app.use(express.static(path.join(process.cwd(), 'public')));
-
-// Serve uploaded images
-app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
-
-// Request logging middleware
+// Logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
+  res.on('finish', () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
-    }
+    log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
   });
-
   next();
 });
 
-(async () => {
-  const server = await registerRoutes(app);
+// Serve static files
+app.use(express.static(path.join(process.cwd(), 'dist/public')));
 
-  // Error handling middleware
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = process.env.NODE_ENV === 'production' 
-      ? 'Internal Server Error' 
-      : err.message || "Internal Server Error";
+// Register API routes
+const server = await registerRoutes(app);
 
-    log(`Error ${status}: ${err.message || 'Unknown error'}`);
-    res.status(status).json({ message });
-    
-    if (process.env.NODE_ENV !== 'production') {
-      console.error(err);
-    }
-  });
+// Error handling middleware
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  const message = process.env.NODE_ENV === 'production'
+    ? 'Internal Server Error'
+    : err.message || "Internal Server Error";
 
-  // Setup Vite in development, serve static in production
-  if (process.env.NODE_ENV === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+  log(`Error ${status}: ${err.message || 'Unknown error'}`);
+  res.status(status).json({ message });
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.error(err);
   }
+});
 
-  // Get port from environment or default to 5000
-  const port = process.env.PORT || 5000;
-  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
-  
+// Setup Vite in development, serve static in production
+if (process.env.NODE_ENV === "development") {
+  await setupVite(app, server);
+} else {
+  serveStatic(app);
+}
+
+// SPA fallback - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api/')) {
+    res.sendFile(path.join(process.cwd(), 'dist/public/index.html'));
+  }
+});
+
+// Get port from environment or default to 5000
+const port = process.env.PORT || 5000;
+const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+
+// Only start server if not in Vercel
+if (!process.env.VERCEL) {
   server.listen({
     port: Number(port),
     host,
@@ -104,4 +86,7 @@ app.use((req, res, next) => {
     log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
     log(`🗄️  Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
   });
-})();
+}
+
+// Export for Vercel
+export default app;

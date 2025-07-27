@@ -12,7 +12,8 @@
     "db:push": "drizzle-kit push",
     "build:prod": "npm run build && npm run start",
     "clean": "rimraf dist",
-    "prebuild": "npm run clean"
+    "prebuild": "npm run clean",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
