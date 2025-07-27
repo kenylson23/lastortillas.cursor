@@ -5,8 +5,7 @@ import {
   type Order, type InsertOrder, type OrderItem, type InsertOrderItem,
   type Table, type InsertTable
 } from "../shared/schema";
-import { db } from "./db";
-import { eq, and, ne } from "drizzle-orm";
+import { supabase } from "../shared/supabase";
 
 export interface IStorage {
   // Reservation operations
@@ -47,7 +46,7 @@ export interface IStorage {
   updateTableStatus(id: number, status: string): Promise<Table>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class SupabaseStorage implements IStorage {
   private initializationPromise: Promise<void> | null = null;
   
   constructor() {
@@ -63,12 +62,13 @@ export class DatabaseStorage implements IStorage {
 
   private async initializeSampleMenuItems(): Promise<void> {
     try {
-      // Test database connection first
-      await db.select().from(menuItems).limit(1);
-      
       // Check if menu items already exist
-      const existingItems = await db.select().from(menuItems);
-      if (existingItems.length === 0) {
+      const { data: existingItems } = await supabase
+        .from('menu_items')
+        .select('*')
+        .limit(1);
+      
+      if (!existingItems || existingItems.length === 0) {
         // Add sample menu items
         const sampleItems = [
           {
@@ -116,7 +116,7 @@ export class DatabaseStorage implements IStorage {
         ];
 
         for (const item of sampleItems) {
-          await db.insert(menuItems).values(item);
+          await supabase.from('menu_items').insert(item);
         }
         console.log('Sample menu items initialized successfully');
       }
@@ -125,255 +125,363 @@ export class DatabaseStorage implements IStorage {
       // Don't throw here, let the app continue without sample data
     }
   }
+
   // Reservation operations
-  async createReservation(insertReservation: InsertReservation): Promise<Reservation> {
+  async createReservation(reservation: InsertReservation): Promise<Reservation> {
     await this.ensureInitialized();
-    const [reservation] = await db
-      .insert(reservations)
-      .values(insertReservation)
-      .returning();
-    return reservation;
+    const { data, error } = await supabase
+      .from('reservations')
+      .insert(reservation)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    return data;
   }
 
-  async createContact(insertContact: InsertContact): Promise<Contact> {
+  async createContact(contact: InsertContact): Promise<Contact> {
     await this.ensureInitialized();
-    const [contact] = await db
-      .insert(contacts)
-      .values(insertContact)
-      .returning();
-    return contact;
+    const { data, error } = await supabase
+      .from('contacts')
+      .insert(contact)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    return data;
   }
 
   async getAllReservations(): Promise<Reservation[]> {
     await this.ensureInitialized();
-    return await db.select().from(reservations);
+    const { data, error } = await supabase
+      .from('reservations')
+      .select('*');
+    
+    if (error) throw new Error(error.message);
+    return data || [];
   }
 
   async checkAvailability(date: string, time: string): Promise<boolean> {
     await this.ensureInitialized();
-    const existing = await db
-      .select()
-      .from(reservations)
-      .where(and(eq(reservations.date, date), eq(reservations.time, time)));
-    return existing.length === 0;
+    const { data, error } = await supabase
+      .from('reservations')
+      .select('*')
+      .eq('date', date)
+      .eq('time', time);
+    
+    if (error) throw new Error(error.message);
+    return (data || []).length === 0;
   }
 
   async getReservationsByDate(date: string): Promise<Reservation[]> {
     await this.ensureInitialized();
-    return await db
-      .select()
-      .from(reservations)
-      .where(eq(reservations.date, date));
+    const { data, error } = await supabase
+      .from('reservations')
+      .select('*')
+      .eq('date', date);
+    
+    if (error) throw new Error(error.message);
+    return data || [];
   }
 
   // Menu Items
   async getAllMenuItems(): Promise<MenuItem[]> {
     await this.ensureInitialized();
-    return await db.select().from(menuItems);
+    const { data, error } = await supabase
+      .from('menu_items')
+      .select('*');
+    
+    if (error) throw new Error(error.message);
+    return data || [];
   }
 
   async getMenuItemsByCategory(category: string): Promise<MenuItem[]> {
     await this.ensureInitialized();
-    return await db
-      .select()
-      .from(menuItems)
-      .where(eq(menuItems.category, category));
+    const { data, error } = await supabase
+      .from('menu_items')
+      .select('*')
+      .eq('category', category);
+    
+    if (error) throw new Error(error.message);
+    return data || [];
   }
 
   async getMenuItem(id: number): Promise<MenuItem | undefined> {
     await this.ensureInitialized();
-    const [item] = await db
-      .select()
-      .from(menuItems)
-      .where(eq(menuItems.id, id));
-    return item;
+    const { data, error } = await supabase
+      .from('menu_items')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) return undefined;
+    return data;
   }
 
-  async createMenuItem(insertItem: InsertMenuItem): Promise<MenuItem> {
+  async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
     await this.ensureInitialized();
-    const [item] = await db
-      .insert(menuItems)
-      .values(insertItem)
-      .returning();
-    return item;
+    const { data, error } = await supabase
+      .from('menu_items')
+      .insert(item)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    return data;
   }
 
   async updateMenuItem(id: number, updates: Partial<MenuItem>): Promise<MenuItem> {
     await this.ensureInitialized();
-    // Remove campos que não devem ser atualizados manualmente
-    const { id: itemId, createdAt, ...validUpdates } = updates;
+    const { data, error } = await supabase
+      .from('menu_items')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
     
-    const [item] = await db
-      .update(menuItems)
-      .set(validUpdates)
-      .where(eq(menuItems.id, id))
-      .returning();
-    return item;
+    if (error) throw new Error(error.message);
+    return data;
   }
 
   async deleteMenuItem(id: number): Promise<void> {
     await this.ensureInitialized();
-    await db
-      .delete(menuItems)
-      .where(eq(menuItems.id, id));
+    const { error } = await supabase
+      .from('menu_items')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw new Error(error.message);
   }
 
   // Orders
-  async createOrder(insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
+  async createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
     await this.ensureInitialized();
-    const [order] = await db
-      .insert(orders)
-      .values(insertOrder)
-      .returning();
+    const { data, error } = await supabase
+      .from('orders')
+      .insert(order)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
     
     // Create order items
-    await db.insert(orderItems).values(
-      items.map(item => ({ ...item, orderId: order.id }))
-    );
-    
-    // If it's a dine-in order with a table, mark the table as occupied
-    if (order.orderType === 'dine-in' && order.tableId) {
-      console.log(`Marking table ${order.tableId} as occupied for order ${order.id}`);
-      await db
-        .update(tables)
-        .set({ status: 'occupied' })
-        .where(eq(tables.id, order.tableId));
-      console.log(`Table ${order.tableId} marked as occupied`);
-    } else {
-      console.log(`Order ${order.id} - orderType: ${order.orderType}, tableId: ${order.tableId}`);
+    for (const item of items) {
+      await supabase.from('order_items').insert({ ...item, order_id: data.id });
     }
     
-    return order;
+    // If it's a dine-in order with a table, mark the table as occupied
+    if (order.order_type === 'dine-in' && order.table_id) {
+      console.log(`Marking table ${order.table_id} as occupied for order ${data.id}`);
+      await supabase
+        .from('tables')
+        .update({ status: 'occupied' })
+        .eq('id', order.table_id);
+      console.log(`Table ${order.table_id} marked as occupied`);
+    }
+    
+    return data;
   }
 
   async getOrder(id: number): Promise<Order | undefined> {
     await this.ensureInitialized();
-    const [order] = await db
-      .select()
-      .from(orders)
-      .where(eq(orders.id, id));
-    return order;
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) return undefined;
+    return data;
   }
 
   async getAllOrders(): Promise<Order[]> {
     await this.ensureInitialized();
-    return await db.select().from(orders);
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*');
+    
+    if (error) throw new Error(error.message);
+    return data || [];
   }
 
   async getOrdersByStatus(status: string): Promise<Order[]> {
     await this.ensureInitialized();
-    return await db
-      .select()
-      .from(orders)
-      .where(eq(orders.status, status));
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('status', status);
+    
+    if (error) throw new Error(error.message);
+    return data || [];
   }
 
   async getOrdersByLocation(locationId: string): Promise<Order[]> {
     await this.ensureInitialized();
-    return await db
-      .select()
-      .from(orders)
-      .where(eq(orders.locationId, locationId));
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('location_id', locationId);
+    
+    if (error) throw new Error(error.message);
+    return data || [];
   }
 
   async updateOrderStatus(id: number, status: string): Promise<Order> {
     await this.ensureInitialized();
     // Get the current order first to check if it has a table
-    const [currentOrder] = await db
-      .select()
-      .from(orders)
-      .where(eq(orders.id, id));
+    const { data: currentOrder } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    const [order] = await db
-      .update(orders)
-      .set({ status })
-      .where(eq(orders.id, id))
-      .returning();
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
 
     // If the order is completed or cancelled, and it was a dine-in order with a table,
     // mark the table as available again
     if (currentOrder && 
-        currentOrder.orderType === 'dine-in' && 
-        currentOrder.tableId && 
+        currentOrder.order_type === 'dine-in' && 
+        currentOrder.table_id && 
         (status === 'delivered' || status === 'cancelled')) {
-      await db
-        .update(tables)
-        .set({ status: 'available' })
-        .where(eq(tables.id, currentOrder.tableId));
+      await supabase
+        .from('tables')
+        .update({ status: 'available' })
+        .eq('id', currentOrder.table_id);
     }
 
-    return order;
+    return data;
   }
 
   async updateOrderEstimatedTime(id: number, estimatedDeliveryTime: string): Promise<Order> {
     await this.ensureInitialized();
-    const [order] = await db
-      .update(orders)
-      .set({ estimatedDeliveryTime })
-      .where(eq(orders.id, id))
-      .returning();
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ estimated_delivery_time: estimatedDeliveryTime })
+      .eq('id', id)
+      .select()
+      .single();
 
-    return order;
+    if (error) throw new Error(error.message);
+    return data;
   }
 
   async deleteOrder(id: number): Promise<void> {
     await this.ensureInitialized();
     // Get the order first to check if it has a table
-    const [currentOrder] = await db
-      .select()
-      .from(orders)
-      .where(eq(orders.id, id));
+    const { data: currentOrder } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
 
     // First delete order items
-    await db
-      .delete(orderItems)
-      .where(eq(orderItems.orderId, id));
+    await supabase
+      .from('order_items')
+      .delete()
+      .eq('order_id', id);
     
     // Then delete the order
-    await db
-      .delete(orders)
-      .where(eq(orders.id, id));
+    const { error } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw new Error(error.message);
 
     // If it was a dine-in order with a table, mark the table as available again
     if (currentOrder && 
-        currentOrder.orderType === 'dine-in' && 
-        currentOrder.tableId) {
-      await db
-        .update(tables)
-        .set({ status: 'available' })
-        .where(eq(tables.id, currentOrder.tableId));
+        currentOrder.order_type === 'dine-in' && 
+        currentOrder.table_id) {
+      await supabase
+        .from('tables')
+        .update({ status: 'available' })
+        .eq('id', currentOrder.table_id);
     }
   }
 
   async getOrderItems(orderId: number): Promise<OrderItem[]> {
     await this.ensureInitialized();
-    return await db
-      .select()
-      .from(orderItems)
-      .where(eq(orderItems.orderId, orderId));
+    const { data, error } = await supabase
+      .from('order_items')
+      .select('*')
+      .eq('order_id', orderId);
+    
+    if (error) throw new Error(error.message);
+    return data || [];
   }
 
   // Tables operations
   async getAllTables(): Promise<Table[]> {
     await this.ensureInitialized();
-    return await db.select().from(tables);
+    const { data, error } = await supabase
+      .from('tables')
+      .select('*');
+    
+    if (error) throw new Error(error.message);
+    
+    // Converter snake_case para camelCase
+    return (data || []).map(table => ({
+      id: table.id,
+      locationId: table.location_id,
+      tableNumber: table.table_number,
+      seats: table.seats,
+      status: table.status,
+      qrCode: table.qr_code,
+      qrCodeUrl: table.qr_code_url,
+      createdAt: table.created_at
+    })) as Table[];
   }
 
   async getTablesByLocation(locationId: string): Promise<Table[]> {
     await this.ensureInitialized();
-    return await db
-      .select()
-      .from(tables)
-      .where(eq(tables.locationId, locationId));
+    const { data, error } = await supabase
+      .from('tables')
+      .select('*')
+      .eq('location_id', locationId);
+    
+    if (error) throw new Error(error.message);
+    
+    // Converter snake_case para camelCase
+    return (data || []).map(table => ({
+      id: table.id,
+      locationId: table.location_id,
+      tableNumber: table.table_number,
+      seats: table.seats,
+      status: table.status,
+      qrCode: table.qr_code,
+      qrCodeUrl: table.qr_code_url,
+      createdAt: table.created_at
+    })) as Table[];
   }
 
   async getTable(id: number): Promise<Table | undefined> {
     await this.ensureInitialized();
-    const [table] = await db
-      .select()
-      .from(tables)
-      .where(eq(tables.id, id));
-    return table;
+    const { data, error } = await supabase
+      .from('tables')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) return undefined;
+    
+    // Converter snake_case para camelCase
+    return {
+      id: data.id,
+      locationId: data.location_id,
+      tableNumber: data.table_number,
+      seats: data.seats,
+      status: data.status,
+      qrCode: data.qr_code,
+      qrCodeUrl: data.qr_code_url,
+      createdAt: data.created_at
+    } as Table;
   }
 
   async createTable(insertTable: InsertTable): Promise<Table> {
@@ -382,25 +490,42 @@ export class DatabaseStorage implements IStorage {
     console.log(`🔍 Verificando duplicação para mesa ${insertTable.tableNumber} no local ${insertTable.locationId}`);
     
     // Verificar se já existe uma mesa com o mesmo número no mesmo local
-    const existingTable = await db
-      .select()
-      .from(tables)
-      .where(and(
-        eq(tables.locationId, insertTable.locationId),
-        eq(tables.tableNumber, insertTable.tableNumber)
-      ));
+    const { data: existingTable } = await supabase
+      .from('tables')
+      .select('*')
+      .eq('location_id', insertTable.locationId)
+      .eq('table_number', insertTable.tableNumber);
     
-    console.log(`🔍 Encontradas ${existingTable.length} mesas existentes:`, existingTable);
+    console.log(`🔍 Encontradas ${existingTable?.length || 0} mesas existentes:`, existingTable);
     
-    if (existingTable.length > 0) {
+    if (existingTable && existingTable.length > 0) {
       throw new Error(`Já existe uma mesa número ${insertTable.tableNumber} no local ${insertTable.locationId}`);
     }
     
-    const [table] = await db
-      .insert(tables)
-      .values(insertTable)
-      .returning();
-    return table;
+    const { data, error } = await supabase
+      .from('tables')
+      .insert({
+        location_id: insertTable.locationId,
+        table_number: insertTable.tableNumber,
+        seats: insertTable.seats,
+        status: insertTable.status || 'available'
+      })
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    
+    // Converter snake_case para camelCase
+    return {
+      id: data.id,
+      locationId: data.location_id,
+      tableNumber: data.table_number,
+      seats: data.seats,
+      status: data.status,
+      qrCode: data.qr_code,
+      qrCodeUrl: data.qr_code_url,
+      createdAt: data.created_at
+    } as Table;
   }
 
   async updateTable(id: number, updates: Partial<Table>): Promise<Table> {
@@ -418,44 +543,82 @@ export class DatabaseStorage implements IStorage {
       const newLocationId = updates.locationId !== undefined ? updates.locationId : currentTable.locationId;
       
       // Verificar se existe outra mesa com o mesmo número no mesmo local
-      const existingTable = await db
-        .select()
-        .from(tables)
-        .where(and(
-          eq(tables.locationId, newLocationId),
-          eq(tables.tableNumber, newNumber),
-          ne(tables.id, id) // Excluir a mesa atual da verificação
-        ));
+      const { data: existingTable } = await supabase
+        .from('tables')
+        .select('*')
+        .eq('location_id', newLocationId)
+        .eq('table_number', newNumber)
+        .neq('id', id);
       
-      if (existingTable.length > 0) {
+      if (existingTable && existingTable.length > 0) {
         throw new Error(`Já existe uma mesa número ${newNumber} no local ${newLocationId}`);
       }
     }
     
-    const [table] = await db
-      .update(tables)
-      .set(updates)
-      .where(eq(tables.id, id))
-      .returning();
-    return table;
+    // Converter camelCase para snake_case
+    const updateData: any = {};
+    if (updates.locationId !== undefined) updateData.location_id = updates.locationId;
+    if (updates.tableNumber !== undefined) updateData.table_number = updates.tableNumber;
+    if (updates.seats !== undefined) updateData.seats = updates.seats;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.qrCode !== undefined) updateData.qr_code = updates.qrCode;
+    if (updates.qrCodeUrl !== undefined) updateData.qr_code_url = updates.qrCodeUrl;
+    
+    const { data, error } = await supabase
+      .from('tables')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    
+    // Converter snake_case para camelCase
+    return {
+      id: data.id,
+      locationId: data.location_id,
+      tableNumber: data.table_number,
+      seats: data.seats,
+      status: data.status,
+      qrCode: data.qr_code,
+      qrCodeUrl: data.qr_code_url,
+      createdAt: data.created_at
+    } as Table;
   }
 
   async deleteTable(id: number): Promise<void> {
     await this.ensureInitialized();
-    await db
-      .delete(tables)
-      .where(eq(tables.id, id));
+    const { error } = await supabase
+      .from('tables')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw new Error(error.message);
   }
 
   async updateTableStatus(id: number, status: string): Promise<Table> {
     await this.ensureInitialized();
-    const [table] = await db
-      .update(tables)
-      .set({ status })
-      .where(eq(tables.id, id))
-      .returning();
-    return table;
+    const { data, error } = await supabase
+      .from('tables')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    
+    // Converter snake_case para camelCase
+    return {
+      id: data.id,
+      locationId: data.location_id,
+      tableNumber: data.table_number,
+      seats: data.seats,
+      status: data.status,
+      qrCode: data.qr_code,
+      qrCodeUrl: data.qr_code_url,
+      createdAt: data.created_at
+    } as Table;
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new SupabaseStorage();
