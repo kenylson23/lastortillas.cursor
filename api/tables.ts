@@ -1,22 +1,77 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { storage } from '../server/storage';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL || 'https://nuoblhgwtxyrafbyxjkw.supabase.co';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51b2JsaGd3dHh5cmFmYnl4amt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODEwMDUsImV4cCI6MjA2NjQ1NzAwNX0.vn95TruJXJRytI30P5xhBMUwc2ECJe4ulJ1xdLw6I6U';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   try {
     if (req.method === 'GET') {
-      const tables = await storage.getAllTables();
-      res.status(200).json(tables);
-    } else if (req.method === 'POST') {
-      const table = await storage.createTable(req.body);
-      res.status(201).json(table);
-    } else if (req.method === 'PUT') {
-      const { id } = req.query;
-      const table = await storage.updateTable(Number(id), req.body);
-      res.status(200).json(table);
-    } else {
-      res.status(405).json({ message: 'Method not allowed' });
+      const { data, error } = await supabase
+        .from('tables')
+        .select('*')
+        .order('table_number', { ascending: true });
+
+      if (error) throw error;
+      return res.status(200).json(data || []);
     }
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+
+    if (req.method === 'POST') {
+      const tableData = req.body;
+      const { data, error } = await supabase
+        .from('tables')
+        .insert([tableData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return res.status(201).json(data);
+    }
+
+    if (req.method === 'PUT') {
+      const { id } = req.query;
+      const updateData = req.body;
+      
+      const { data, error } = await supabase
+        .from('tables')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return res.status(200).json(data);
+    }
+
+    if (req.method === 'DELETE') {
+      const { id } = req.query;
+      
+      const { error } = await supabase
+        .from('tables')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return res.status(200).json({ message: 'Table deleted successfully' });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error) {
+    console.error('Tables error:', error);
+    return res.status(500).json({
+      error: 'Erro interno do servidor',
+      message: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
   }
 } 
