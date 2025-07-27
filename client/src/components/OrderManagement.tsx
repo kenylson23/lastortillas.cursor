@@ -86,7 +86,7 @@ export default function OrderManagement() {
       
       // Atualizar o pedido selecionado se for o mesmo
       if (selectedOrder && selectedOrder.id === variables.orderId) {
-        setSelectedOrder(prev => prev ? { ...prev, status: variables.status } : null);
+        setSelectedOrder((prev: OrderWithItems | null) => prev ? { ...prev, status: variables.status } : null);
       }
       
       toast({
@@ -178,7 +178,7 @@ ${selectedOrder.orderType === 'dine-in' && selectedOrder.tableId ? `*Mesa:* ${ge
 *Total:* ${selectedOrder.totalAmount} AOA
 
 *Itens:*
-${selectedOrder.items?.map(item => `• ${getMenuItemName(item.menuItemId)} (${item.quantity}x) - ${item.itemPrice} AOA`).join('\n')}
+${selectedOrder.items?.map(item => `• ${getMenuItemName(item.menuItemId)} (${item.quantity}x) - ${item.unitPrice} AOA`).join('\n')}
 
 *Entrega estimada:* ${selectedOrder.estimatedDeliveryTime || 'A definir'}
 ${selectedOrder.deliveryAddress ? `*Endereço:* ${selectedOrder.deliveryAddress}` : ''}
@@ -262,7 +262,7 @@ ${selectedOrder.deliveryAddress ? `*Endereço:* ${selectedOrder.deliveryAddress}
 
   const getTableInfo = (tableId: number | null) => {
     if (!tableId) return null;
-    const table = allTables.find(t => t.id === tableId);
+    const table = allTables.find((t: any) => t.id === tableId);
     return table ? `Mesa ${table.tableNumber} (${table.seats} pessoas)` : `Mesa #${tableId}`;
   };
 
@@ -630,7 +630,7 @@ ${selectedOrder.deliveryAddress ? `*Endereço:* ${selectedOrder.deliveryAddress}
                           </div>
                           <div className="text-right">
                             <p className="font-medium">{item.quantity}x {item.unitPrice} AOA</p>
-                            <p className="text-sm text-gray-600">= {item.subtotal} AOA</p>
+                            <p className="text-sm text-gray-600">= {(parseFloat(item.unitPrice) * item.quantity).toFixed(2)} AOA</p>
                           </div>
                         </div>
                       ))}

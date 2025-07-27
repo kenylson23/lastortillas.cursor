@@ -13,7 +13,7 @@ interface TableModalProps {
 }
 
 function TableModal({ isOpen, onClose, table, onSave, allTables }: TableModalProps) {
-  const [formData, setFormData] = useState<Partial<InsertTable>>({
+  const [formData, setFormData] = useState<Partial<{ locationId: string; tableNumber: number; seats: number; status: string }>>({
     tableNumber: table?.tableNumber || 1,
     locationId: table?.locationId || 'talatona',
     seats: table?.seats || 2,
@@ -32,7 +32,7 @@ function TableModal({ isOpen, onClose, table, onSave, allTables }: TableModalPro
         ? Math.max(...tablesInLocation.map(t => t.tableNumber)) 
         : 0;
       const nextNumber = maxNumber + 1;
-      setFormData(prev => ({ ...prev, tableNumber: nextNumber }));
+      setFormData(prev => ({ ...prev, tableNumber: nextNumber } as any));
       setStartNumber(nextNumber);
     }
   }, [formData.locationId, allTables, table]);
@@ -303,7 +303,7 @@ function TableModal({ isOpen, onClose, table, onSave, allTables }: TableModalPro
                 <button
                   key={capacity}
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, seats: capacity }))}
+                  onClick={() => setFormData(prev => ({ ...prev, seats: capacity } as any))}
                   className={`p-2 rounded-md text-sm transition-colors ${
                     formData.seats === capacity
                       ? 'bg-blue-100 text-blue-700 border border-blue-300'

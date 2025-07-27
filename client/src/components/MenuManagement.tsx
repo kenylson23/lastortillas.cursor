@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../hooks/use-toast';
-import { MenuItem, InsertMenuItem } from '../../shared/schema';
+import type { MenuItem } from '@/types/components';
 import { apiRequest } from '../lib/queryClient';
 
 export default function MenuManagement() {
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null);
-  const [newItem, setNewItem] = useState<Partial<InsertMenuItem>>({
+  const [newItem, setNewItem] = useState<Partial<MenuItem>>({
     name: '',
     description: '',
     price: '0',
@@ -28,7 +28,7 @@ export default function MenuManagement() {
 
   // Add item mutation
   const addItemMutation = useMutation({
-    mutationFn: async (item: InsertMenuItem) => {
+    mutationFn: async (item: MenuItem) => {
       const response = await apiRequest('POST', '/api/menu-items', item);
       return response.json();
     },
@@ -91,7 +91,7 @@ export default function MenuManagement() {
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (newItem.name && newItem.category && newItem.price) {
-      addItemMutation.mutate(newItem as InsertMenuItem);
+      addItemMutation.mutate(newItem as MenuItem);
     }
   };
 

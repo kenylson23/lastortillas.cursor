@@ -203,13 +203,13 @@ export default function OrderTracking({ orderId }: OrderTrackingProps) {
               <div key={index} className="flex justify-between items-center">
                 <div>
                   <p className="font-semibold">{item.quantity}x Item #{item.menuItemId}</p>
-                  {item.customizations?.length > 0 && (
+                  {item.customizations && item.customizations.length > 0 && (
                     <p className="text-sm text-gray-600">
                       {item.customizations.join(', ')}
                     </p>
                   )}
                 </div>
-                <p className="font-semibold">{item.subtotal} AOA</p>
+                <p className="font-semibold">{(parseFloat(item.unitPrice) * item.quantity).toFixed(2)} AOA</p>
               </div>
             ))}
           </div>

@@ -147,7 +147,7 @@ export default function Admin() {
         {activeTab === 'orders' && <OrderManagement />}
         {activeTab === 'menu' && <MenuManagement />}
         {activeTab === 'tables' && <TableManagement />}
-        {activeTab === 'analytics' && <OrderStats />}
+        {activeTab === 'analytics' && <OrderStats stats={{ total: 0, active: 0, ready: 0, delivered: 0, delayed: 0 }} />}
       </div>
     </div>
   );

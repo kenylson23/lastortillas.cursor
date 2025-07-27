@@ -270,13 +270,13 @@ export class SupabaseStorage implements IStorage {
     }
     
     // If it's a dine-in order with a table, mark the table as occupied
-    if (order.orderType === 'dine-in' && order.tableId) {
-      console.log(`Marking table ${order.tableId} as occupied for order ${data.id}`);
+    if ((order as any).orderType === 'dine-in' && (order as any).tableId) {
+      console.log(`Marking table ${(order as any).tableId} as occupied for order ${data.id}`);
       await supabase
         .from('tables')
         .update({ status: 'occupied' })
-        .eq('id', order.tableId);
-      console.log(`Table ${order.tableId} marked as occupied`);
+        .eq('id', (order as any).tableId);
+      console.log(`Table ${(order as any).tableId} marked as occupied`);
     }
     
     return data;
@@ -326,7 +326,7 @@ export class SupabaseStorage implements IStorage {
     return data || [];
   }
 
-  async updateOrder(id: number, updates: Partial<InsertOrder>): Promise<Order> {
+  async updateOrder(id: number, updates: Partial<Order>): Promise<Order> {
     await this.ensureInitialized();
     // Converter camelCase para snake_case
     const updateData: any = {};
@@ -516,28 +516,28 @@ export class SupabaseStorage implements IStorage {
   async createTable(insertTable: InsertTable): Promise<Table> {
     await this.ensureInitialized();
     
-    console.log(`🔍 Verificando duplicação para mesa ${insertTable.tableNumber} no local ${insertTable.locationId}`);
+    console.log(`🔍 Verificando duplicação para mesa ${(insertTable as any).tableNumber} no local ${(insertTable as any).locationId}`);
     
     // Verificar se já existe uma mesa com o mesmo número no mesmo local
     const { data: existingTable } = await supabase
       .from('tables')
       .select('*')
-      .eq('location_id', insertTable.locationId)
-      .eq('table_number', insertTable.tableNumber);
+      .eq('location_id', (insertTable as any).locationId)
+      .eq('table_number', (insertTable as any).tableNumber);
     
     console.log(`🔍 Encontradas ${existingTable?.length || 0} mesas existentes:`, existingTable);
     
     if (existingTable && existingTable.length > 0) {
-      throw new Error(`Já existe uma mesa número ${insertTable.tableNumber} no local ${insertTable.locationId}`);
+      throw new Error(`Já existe uma mesa número ${(insertTable as any).tableNumber} no local ${(insertTable as any).locationId}`);
     }
     
     const { data, error } = await supabase
       .from('tables')
       .insert({
-        location_id: insertTable.locationId,
-        table_number: insertTable.tableNumber,
-        seats: insertTable.seats,
-        status: insertTable.status || 'available'
+        location_id: (insertTable as any).locationId,
+        table_number: (insertTable as any).tableNumber,
+        seats: (insertTable as any).seats,
+        status: (insertTable as any).status || 'available'
       })
       .select()
       .single();

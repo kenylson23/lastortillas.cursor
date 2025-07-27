@@ -41,7 +41,7 @@ export default function Navigation() {
               {navItems.map((item) => (
                 <button
                   key={item.href}
-                  onClick={() => handleNavigation(item.href, item.isRoute)}
+                  onClick={() => handleNavigation(item.href, (item as any).isRoute || false)}
                   className="text-gray-700 hover:text-red-600 transition-colors duration-300"
                 >
                   {item.label}
@@ -140,7 +140,7 @@ export default function Navigation() {
                     <button
                       key={item.href}
                       onClick={() => {
-                        handleNavigation(item.href, item.isRoute);
+                        handleNavigation(item.href, (item as any).isRoute || false);
                         setIsMenuOpen(false);
                       }}
                       className="block w-full text-left text-gray-700 hover:text-red-600 hover:bg-red-50 px-4 py-3 rounded-lg text-lg font-medium transition-colors"

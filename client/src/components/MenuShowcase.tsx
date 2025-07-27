@@ -3,9 +3,10 @@ import { MENU_ITEMS } from "../lib/constants";
 import ScrollReveal from "./ScrollReveal";
 import LazyImage from "./LazyImage";
 import { memo } from "react";
+import type { MenuItem } from '@/types/components';
 
 // Componente memo para item do menu
-const MenuItemCard = memo(({ item, index }: { item: typeof MENU_ITEMS[0], index: number }) => {
+const MenuItemCard = memo(({ item, index }: { item: MenuItem, index: number }) => {
   const handleOrderItem = (itemName: string) => {
     // Simple alert for static deployment
     alert(`${itemName} - Entre em contato via WhatsApp para fazer seu pedido!`);
@@ -62,7 +63,7 @@ export default function MenuShowcase() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {MENU_ITEMS.map((item, index) => (
-            <MenuItemCard key={item.id} item={item} index={index} />
+            <MenuItemCard key={item.id} item={{...item, category: 'Tacos'}} index={index} />
           ))}
         </div>
 

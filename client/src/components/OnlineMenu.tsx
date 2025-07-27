@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../lib/queryClient';
-import EnhancedCart from './EnhancedCart';
+import { EnhancedCart } from './EnhancedCart';
 import OrderSuccessModal from './OrderSuccessModal';
+import type { CustomerInfo, Order } from '@/types/components';
 import OrderTracking from './OrderTracking';
 import { useAuth } from '../hooks/useAuth';
 
@@ -17,6 +18,7 @@ interface MenuItem {
   available?: boolean;
   preparationTime?: number;
   customizations?: string[];
+  image?: string;
 }
 
 interface OrderItem {
@@ -26,14 +28,7 @@ interface OrderItem {
   customizations?: string[];
 }
 
-interface Order {
-  id: number;
-  customerName: string;
-  customerPhone: string;
-  orderType: string;
-  totalAmount: string;
-  items: OrderItem[];
-}
+
 
 interface CartItem extends MenuItem {
   quantity: number;
@@ -79,7 +74,7 @@ export default function OnlineMenu({
   const [searchQuery, setSearchQuery] = useState('');
   const [showQuickActions, setShowQuickActions] = useState(false);
   
-  const [customerInfo, setCustomerInfo] = useState(() => {
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(`customerInfo_${locationId}`);
       if (saved) {
@@ -227,7 +222,7 @@ export default function OnlineMenu({
           const categoryIndex = parseInt(e.key) - 1;
           const availableCategories = ['Todos', ...Array.from(new Set(menuItems.map((item: MenuItem) => item.category)))];
           if (categoryIndex < availableCategories.length) {
-            setSelectedCategory(availableCategories[categoryIndex]);
+            setSelectedCategory(availableCategories[categoryIndex] as string);
           }
           break;
       }
@@ -274,9 +269,9 @@ export default function OnlineMenu({
     }
   }, [locationId]);
 
-  const { data: menuItems = [], isLoading, error } = useQuery({
+  const { data: menuItems = [] as MenuItem[], isLoading, error } = useQuery<MenuItem[]>({
     queryKey: ['/api/menu-items'],
-    queryFn: async () => {
+    queryFn: async (): Promise<MenuItem[]> => {
       console.log('Fetching menu items...');
       const response = await apiRequest('GET', '/api/menu-items');
       console.log('Response status:', response.status);
@@ -298,7 +293,7 @@ export default function OnlineMenu({
       const data = await response.json();
       console.log('📊 Tables data received:', data);
       console.log('📊 Tables data length:', data.length);
-      console.log('📊 Available tables:', data.filter(t => t.status === 'available'));
+      console.log('📊 Available tables:', data.filter((t: any) => t.status === 'available'));
       return data;
     },
     staleTime: 5 * 1000, // 5 segundos para debug
@@ -357,7 +352,7 @@ export default function OnlineMenu({
     }
   });
 
-  const categories = ['Todos', ...Array.from(new Set(menuItems.map((item: MenuItem) => item.category)))];
+  const categories: string[] = ['Todos', ...Array.from(new Set(menuItems.map((item: MenuItem) => item.category)))];
 
   const filteredItems = useMemo(() => {
     let items = selectedCategory === 'Todos' 
@@ -367,7 +362,7 @@ export default function OnlineMenu({
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      items = items.filter(item => 
+      items = items.filter((item: MenuItem) => 
         item.name.toLowerCase().includes(query) ||
         item.description.toLowerCase().includes(query) ||
         item.category.toLowerCase().includes(query)
@@ -387,14 +382,14 @@ export default function OnlineMenu({
   console.log('OnlineMenu - tablesLoading:', tablesLoading);
 
   const addToCart = (item: MenuItem, customizations: string[] = []) => {
-    setCart(prev => {
-      const existingItem = prev.find(cartItem => 
+    setCart((prev: CartItem[]) => {
+      const existingItem = prev.find((cartItem: CartItem) => 
         cartItem.id === item.id && 
         JSON.stringify(cartItem.customizations) === JSON.stringify(customizations)
       );
 
       if (existingItem) {
-        return prev.map(cartItem =>
+        return prev.map((cartItem: CartItem) =>
           cartItem.id === item.id && 
           JSON.stringify(cartItem.customizations) === JSON.stringify(customizations)
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
@@ -408,16 +403,30 @@ export default function OnlineMenu({
 
   const updateQuantity = (itemId: number, customizations: string[], newQuantity: number) => {
     if (newQuantity === 0) {
-      setCart(prev => prev.filter(item => 
+      setCart((prev: CartItem[]) => prev.filter((item: CartItem) => 
         !(item.id === itemId && JSON.stringify(item.customizations) === JSON.stringify(customizations))
       ));
     } else {
-      setCart(prev => prev.map(item =>
+      setCart((prev: CartItem[]) => prev.map((item: CartItem) =>
         item.id === itemId && JSON.stringify(item.customizations) === JSON.stringify(customizations)
           ? { ...item, quantity: newQuantity }
           : item
       ));
     }
+  };
+
+  const removeItem = (itemId: number, customizations: string[]) => {
+    setCart(prev => prev.filter((item: CartItem) => 
+      !(item.id === itemId && JSON.stringify(item.customizations) === JSON.stringify(customizations))
+    ));
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
+
+  const handleCheckout = (customerInfo: CustomerInfo) => {
+    handleSubmitOrder();
   };
 
   const getTotalPrice = () => {
@@ -450,7 +459,7 @@ export default function OnlineMenu({
   const handleSubmitOrder = () => {
     if (cart.length === 0) return;
 
-    const orderItems = cart.map(item => ({
+    const orderItems = cart.map((item: CartItem) => ({
       menuItemId: item.id,
       quantity: item.quantity,
       unitPrice: item.price,
@@ -768,12 +777,12 @@ export default function OnlineMenu({
 
               {/* Category Filters */}
               <div className="flex overflow-x-auto gap-1 sm:gap-2 pb-2 sm:pb-3 -mx-2 px-2 scrollbar-hide">
-                {categories.map((category, index) => {
+                {categories.map((category: string, index: number) => {
                   const categoryEmojis = ['🍽️', '🌮', '🥙', '🌯', '🫔', '🥗'];
                   return (
                     <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
+                      key={category as string}
+                                              onClick={() => setSelectedCategory(category as string)}
                       className={`px-3 sm:px-4 lg:px-5 py-2 sm:py-2.5 lg:py-3 rounded-lg whitespace-nowrap transition-all duration-300 text-xs sm:text-sm lg:text-base flex-shrink-0 font-semibold border ${
                       selectedCategory === category
                         ? 'bg-red-500 text-white shadow-md border-red-500'
@@ -781,8 +790,8 @@ export default function OnlineMenu({
                     }`}
                   >
                     <span className="text-xs sm:text-sm lg:text-base mr-1 sm:mr-1.5">{categoryEmojis[index % categoryEmojis.length]}</span>
-                    <span className="hidden sm:inline">{category}</span>
-                    <span className="sm:hidden">{category.length > 8 ? category.substring(0, 8) + '...' : category}</span>
+                    <span className="hidden sm:inline">{category as string}</span>
+                    <span className="sm:hidden">{(category as string).length > 8 ? (category as string).substring(0, 8) + '...' : category as string}</span>
                   </button>
                 );
               })}
@@ -860,7 +869,7 @@ export default function OnlineMenu({
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-                {filteredItems.map((item: MenuItem, index) => (
+                {filteredItems.map((item: MenuItem, index: number) => (
                   <MenuItemCard
                     key={item.id}
                     item={item}
@@ -880,16 +889,10 @@ export default function OnlineMenu({
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         onUpdateQuantity={updateQuantity}
-        onSubmitOrder={(orderData) => {
-          console.log('OnlineMenu received order data from EnhancedCart:', orderData);
-          createOrderMutation.mutate(orderData);
-        }}
-        locationId={locationId}
-        isSubmitting={createOrderMutation.isPending}
-        availableTables={availableTables}
+        onRemoveItem={removeItem}
+        onClearCart={clearCart}
+        onCheckout={handleCheckout}
         qrTableId={tableId}
-        qrTableNumber={tableNumber}
-        tableStatus={tableStatus}
       />
 
       {/* Success Modal */}
@@ -956,7 +959,7 @@ export default function OnlineMenu({
               <div className="space-y-3">
                 <h4 className="font-semibold text-gray-800">🌟 Itens Populares</h4>
                 <div className="grid grid-cols-2 gap-2">
-                  {menuItems.slice(0, 4).map((item) => (
+                  {menuItems.slice(0, 4).map((item: MenuItem) => (
                     <button
                       key={item.id}
                       onClick={() => {
@@ -1016,9 +1019,9 @@ function MenuItemCard({
   const [isHovered, setIsHovered] = useState(false);
 
   const toggleCustomization = (customization: string) => {
-    setSelectedCustomizations(prev =>
+    setSelectedCustomizations((prev: string[]) =>
       prev.includes(customization)
-        ? prev.filter(c => c !== customization)
+        ? prev.filter((c: string) => c !== customization)
         : [...prev, customization]
     );
   };

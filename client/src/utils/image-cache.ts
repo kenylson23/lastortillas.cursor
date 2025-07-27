@@ -66,7 +66,7 @@ export function useImagePreload(src: string) {
 
 // Preload crítico para imagens do hero
 export function preloadCriticalImages() {
-  const criticalImages = [
+  const criticalImages: string[] = [
     // Adicionar aqui as imagens críticas que precisam carregar primeiro
   ];
   

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { MenuItem } from "../../shared/schema";
+import type { MenuItem } from "@/types/components";
 
 export default function SimpleMenuShowcase() {
   const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({

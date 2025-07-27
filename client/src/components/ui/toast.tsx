@@ -20,7 +20,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const toast = (toastData: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
-    setToasts(prev => [...prev, { ...toastData, id }]);
+    setToasts((prev: Toast[]) => [...prev, { ...toastData, id }]);
     
     // Auto dismiss after 3 seconds
     setTimeout(() => {
@@ -29,7 +29,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   };
 
   const dismiss = (id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+    setToasts((prev: Toast[]) => prev.filter(t => t.id !== id));
   };
 
   return (

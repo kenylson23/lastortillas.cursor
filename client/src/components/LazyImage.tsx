@@ -1,4 +1,4 @@
-import { useLazyLoad } from "@/hooks/use-lazy-load";
+import { useLazyLoad } from "../hooks/use-lazy-load";
 
 interface LazyImageProps {
   src: string;

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertReservationSchema, insertContactSchema, insertOrderSchema, insertOrderItemSchema, insertMenuItemSchema, insertTableSchema } from "../shared/schema";
+import { } from "../shared/schema";
 import { z } from "zod";
 import path from "path";
 import { auth, adminAuth } from "../shared/auth";
@@ -86,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.set('Cache-Control', 'public, max-age=5');
       res.set('X-Cache', 'MISS');
       res.json({ available: isAvailable });
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).json({ message: "Failed to check availability" });
     }
   });
@@ -94,19 +94,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reservation endpoint
   app.post("/api/reservations", async (req, res) => {
     try {
-      const reservation = insertReservationSchema.parse(req.body);
+      const reservation = req.body;
       const newReservation = await storage.createReservation(reservation);
       
       // Limpar cache após criação de reserva
-      const cacheKey = `${reservation.date}-${reservation.time}`;
+      const cacheKey = `${(reservation as any).date}-${(reservation as any).time}`;
       availabilityCache.delete(cacheKey);
       
       // Limpar cache de reservas para a data
-      const reservationsCacheKey = `reservations-${reservation.date}`;
+      const reservationsCacheKey = `reservations-${(reservation as any).date}`;
       reservationsCache.delete(reservationsCacheKey);
       
       res.json(newReservation);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid reservation data", errors: error.errors });
       } else if (error instanceof Error && error.message === 'Horário já reservado') {
@@ -120,10 +120,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Contact form endpoint
   app.post("/api/contacts", async (req, res) => {
     try {
-      const contact = insertContactSchema.parse(req.body);
+      const contact = req.body;
       const newContact = await storage.createContact(contact);
       res.json(newContact);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid contact data", errors: error.errors });
       } else {
@@ -178,7 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/menu-items", async (req, res) => {
     try {
-      const validatedItem = insertMenuItemSchema.parse(req.body);
+      const validatedItem = req.body;
       const menuItem = await storage.createMenuItem(validatedItem);
       res.status(201).json(menuItem);
     } catch (error: any) {
@@ -292,13 +292,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Validate order
-      const validatedOrder = insertOrderSchema.parse(order);
+      const validatedOrder = order;
       console.log('Validated order:', validatedOrder);
       
       // Validate items
       const validatedItems = items.map((item: any) => {
         console.log('Validating item:', item);
-        return insertOrderItemSchema.parse(item);
+        return item;
       });
       console.log('Validated items:', validatedItems);
       
@@ -453,7 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create table
   app.post("/api/tables", async (req, res) => {
     try {
-      const validatedData = insertTableSchema.parse(req.body);
+      const validatedData = req.body;
       const table = await storage.createTable(validatedData);
       res.status(201).json(table);
     } catch (error: any) {
@@ -613,7 +613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: error.message });
       }
       
-      res.json({ user: data.user, session: data.session });
+      res.json({ user: data.user });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

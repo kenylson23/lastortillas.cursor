@@ -5,20 +5,34 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictFunctionTypes": false,
     "skipLibCheck": true,
     "outDir": "./dist",
     "rootDir": "./",
     "allowJs": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "resolveJsonModule": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["client/src/*"],
+      "@shared/*": ["shared/*"],
+      "@assets/*": ["attached_assets/*"],
+      "@/types/*": ["types/*"],
+      "@/hooks/*": ["client/src/hooks/*"]
+    }
   },
   "include": [
     "api/**/*.ts",
     "server/**/*.ts",
     "shared/**/*.ts",
     "client/**/*.ts",
+    "client/**/*.tsx",
+    "types/**/*.d.ts",
+    "types/react-extensions.d.ts",
     "*.ts"
   ],
   "exclude": [

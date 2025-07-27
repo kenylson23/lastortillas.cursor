@@ -52,7 +52,7 @@ interface KitchenStats {
   delayed: number;
 }
 
-type KitchenFiltersType = 'all' | 'pending' | 'preparing' | 'ready' | 'delivered';
+type KitchenFiltersType = 'all' | 'received' | 'preparing' | 'ready' | 'delivered';
 
 export default function Kitchen() {
   const [, setLocation] = useLocation();
@@ -123,12 +123,12 @@ export default function Kitchen() {
   };
 
   // Queries para dados
-  const { data: orders = [], isLoading: ordersLoading } = useQuery({
+  const { data: orders = [] as Order[], isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ['/api/orders'],
     refetchInterval: autoRefresh ? 3000 : false,
   });
 
-  const { data: menuItems = [] } = useQuery({
+  const { data: menuItems = [] as MenuItem[] } = useQuery<MenuItem[]>({
     queryKey: ['/api/menu-items'],
   });
 

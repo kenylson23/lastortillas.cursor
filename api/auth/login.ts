@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     console.log('Login request received:', { 
       body: req.body,
-      headers: req.headers['content-type']
+      headers: req.headers['content-type'] as string
     });
 
     const { username, password } = req.body;

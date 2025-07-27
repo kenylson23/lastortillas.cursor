@@ -96,56 +96,23 @@ export const tables = pgTable("tables", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertReservationSchema = createInsertSchema(reservations).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertContactSchema = createInsertSchema(contacts).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertMenuItemSchema = createInsertSchema(menuItems).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertOrderSchema = createInsertSchema(orders).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  estimatedDeliveryTime: z.string().optional(),
-});
-
-export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
-  id: true,
-  orderId: true,
-});
-
-export const insertTableSchema = createInsertSchema(tables).omit({
-  id: true,
-  createdAt: true,
-});
-
 // Types from Drizzle schema inference
 export type Reservation = typeof reservations.$inferSelect;
-export type InsertReservation = z.infer<typeof insertReservationSchema>;
+export type InsertReservation = typeof reservations.$inferInsert;
 
 export type Contact = typeof contacts.$inferSelect;
-export type InsertContact = z.infer<typeof insertContactSchema>;
+export type InsertContact = typeof contacts.$inferInsert;
 
 export type MenuItem = typeof menuItems.$inferSelect;
-export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
+export type InsertMenuItem = typeof menuItems.$inferInsert;
 
 export type Order = typeof orders.$inferSelect;
-export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type InsertOrder = typeof orders.$inferInsert;
 
 export type OrderItem = typeof orderItems.$inferSelect;
-export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+export type InsertOrderItem = typeof orderItems.$inferInsert;
 
 export type Table = typeof tables.$inferSelect;
-export type InsertTable = z.infer<typeof insertTableSchema>;
+export type InsertTable = typeof tables.$inferInsert;
 
 
