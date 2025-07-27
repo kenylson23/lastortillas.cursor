@@ -14,36 +14,49 @@ export default function Login() {
 
     console.log('Tentando login com:', credentials);
 
-    // Simple authentication - in production, this would be handled by the backend
-    if (credentials.username === 'administrador' && credentials.password === 'lasTortillas2025!') {
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userRole', 'admin');
-      console.log('Login bem-sucedido - Administrador');
-      toast({
-        title: "Login realizado com sucesso",
-        description: "Redirecionando para o painel administrativo...",
-        variant: "success",
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
       });
-      setTimeout(() => {
-        setLocation('/admin');
-      }, 1000);
-    } else if (credentials.username === 'cozinha' && credentials.password === 'lasTortillas2025Cozinha!') {
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userRole', 'kitchen');
-      console.log('Login bem-sucedido - Cozinha');
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('userRole', data.user.role);
+        localStorage.setItem('userInfo', JSON.stringify(data.user));
+        
+        console.log('Login bem-sucedido:', data.user.role);
+        toast({
+          title: "Login realizado com sucesso",
+          description: `Redirecionando para o painel ${data.user.role === 'admin' ? 'administrativo' : 'da cozinha'}...`,
+          variant: "success",
+        });
+        
+        setTimeout(() => {
+          if (data.user.role === 'admin') {
+            setLocation('/admin');
+          } else {
+            setLocation('/cozinha');
+          }
+        }, 1000);
+      } else {
+        console.log('Credenciais inválidas:', data.message);
+        toast({
+          title: "Credenciais inválidas",
+          description: data.message || "Nome de usuário ou senha incorretos",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Erro no login:', error);
       toast({
-        title: "Login realizado com sucesso",
-        description: "Redirecionando para o painel da cozinha...",
-        variant: "success",
-      });
-      setTimeout(() => {
-        setLocation('/cozinha');
-      }, 1000);
-    } else {
-      console.log('Credenciais inválidas:', credentials);
-      toast({
-        title: "Credenciais inválidas",
-        description: "Nome de usuário ou senha incorretos",
+        title: "Erro de conexão",
+        description: "Não foi possível conectar ao servidor. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -52,24 +65,29 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-green-50 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center py-4 sm:py-8 lg:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-6 sm:space-y-8">
-        {/* Logo e Header */}
+        {/* Header */}
         <div className="text-center">
-          <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 bg-red-600 rounded-full flex items-center justify-center mb-4 sm:mb-6">
-            <svg className="w-10 h-10 sm:w-12 sm:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+          <div className="flex items-center justify-center gap-3 mb-6 sm:mb-8">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-600 rounded-full flex items-center justify-center">
+              <span className="text-2xl sm:text-3xl font-bold text-white">🌮</span>
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-red-600">Las Tortillas</h1>
+              <p className="text-xs sm:text-sm text-gray-600">Mexican Grill</p>
+            </div>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-            Painel Administrativo
+          
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Acesso Administrativo
           </h2>
-          <p className="mt-2 text-sm sm:text-base text-gray-600">
-            Las Tortillas Mexican Grill
+          <p className="mt-2 text-sm sm:text-base text-gray-600 px-2 sm:px-0">
+            Entre com suas credenciais de administrador
           </p>
         </div>
 
-        {/* Card do Formulário */}
+        {/* Login Form */}
         <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
           <form 
             className="space-y-6" 
@@ -112,26 +130,24 @@ export default function Login() {
               </div>
             </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center items-center py-3 px-4 border border-transparent text-base font-semibold rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Entrando...
-                  </>
-                ) : (
-                  '🔐 Entrar no Painel'
-                )}
-              </button>
-            </div>
-
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Entrando...
+                </>
+              ) : (
+                'Entrar'
+              )}
+            </button>
+            
             <div className="text-center space-y-3">
               <div className="text-xs sm:text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border">
                 <div className="font-medium text-gray-700 mb-2">Credenciais de acesso:</div>
