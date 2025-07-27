@@ -1,0 +1,3 @@
+# Arquivo para forçar nova implantação no Vercel
+# Build timestamp: $(date)
+# Version: 1.0.0 
