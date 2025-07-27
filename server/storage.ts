@@ -326,6 +326,35 @@ export class SupabaseStorage implements IStorage {
     return data || [];
   }
 
+  async updateOrder(id: number, updates: Partial<InsertOrder>): Promise<Order> {
+    await this.ensureInitialized();
+    // Converter camelCase para snake_case
+    const updateData: any = {};
+    if (updates.customerName !== undefined) updateData.customer_name = updates.customerName;
+    if (updates.customerPhone !== undefined) updateData.customer_phone = updates.customerPhone;
+    if (updates.customerEmail !== undefined) updateData.customer_email = updates.customerEmail;
+    if (updates.deliveryAddress !== undefined) updateData.delivery_address = updates.deliveryAddress;
+    if (updates.orderType !== undefined) updateData.order_type = updates.orderType;
+    if (updates.locationId !== undefined) updateData.location_id = updates.locationId;
+    if (updates.tableId !== undefined) updateData.table_id = updates.tableId;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.totalAmount !== undefined) updateData.total_amount = updates.totalAmount;
+    if (updates.paymentMethod !== undefined) updateData.payment_method = updates.paymentMethod;
+    if (updates.paymentStatus !== undefined) updateData.payment_status = updates.paymentStatus;
+    if (updates.notes !== undefined) updateData.notes = updates.notes;
+    if (updates.estimatedDeliveryTime !== undefined) updateData.estimated_delivery_time = updates.estimatedDeliveryTime;
+
+    const { data, error } = await supabase
+      .from('orders')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
   async updateOrderStatus(id: number, status: string): Promise<Order> {
     await this.ensureInitialized();
     // Get the current order first to check if it has a table
