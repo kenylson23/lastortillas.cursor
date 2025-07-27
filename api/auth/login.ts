@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log('Validating credentials for:', username);
 
-    // Verificar credenciais
+    // Verificar credenciais - Sistema Customizado
     if (username === 'administrador' && password === 'lasTortillas2025!') {
       console.log('Admin login successful');
       return res.status(200).json({

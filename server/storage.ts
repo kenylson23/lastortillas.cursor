@@ -270,13 +270,13 @@ export class SupabaseStorage implements IStorage {
     }
     
     // If it's a dine-in order with a table, mark the table as occupied
-    if (order.order_type === 'dine-in' && order.table_id) {
-      console.log(`Marking table ${order.table_id} as occupied for order ${data.id}`);
+    if (order.orderType === 'dine-in' && order.tableId) {
+      console.log(`Marking table ${order.tableId} as occupied for order ${data.id}`);
       await supabase
         .from('tables')
         .update({ status: 'occupied' })
-        .eq('id', order.table_id);
-      console.log(`Table ${order.table_id} marked as occupied`);
+        .eq('id', order.tableId);
+      console.log(`Table ${order.tableId} marked as occupied`);
     }
     
     return data;
@@ -376,13 +376,13 @@ export class SupabaseStorage implements IStorage {
     // If the order is completed or cancelled, and it was a dine-in order with a table,
     // mark the table as available again
     if (currentOrder && 
-        currentOrder.order_type === 'dine-in' && 
-        currentOrder.table_id && 
+        currentOrder.orderType === 'dine-in' && 
+        currentOrder.tableId && 
         (status === 'delivered' || status === 'cancelled')) {
       await supabase
         .from('tables')
         .update({ status: 'available' })
-        .eq('id', currentOrder.table_id);
+        .eq('id', currentOrder.tableId);
     }
 
     return data;
@@ -426,12 +426,12 @@ export class SupabaseStorage implements IStorage {
 
     // If it was a dine-in order with a table, mark the table as available again
     if (currentOrder && 
-        currentOrder.order_type === 'dine-in' && 
-        currentOrder.table_id) {
+        currentOrder.orderType === 'dine-in' && 
+        currentOrder.tableId) {
       await supabase
         .from('tables')
         .update({ status: 'available' })
-        .eq('id', currentOrder.table_id);
+        .eq('id', currentOrder.tableId);
     }
   }
 
