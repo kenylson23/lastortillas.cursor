@@ -1,3 +1,9 @@
+import jwt from 'jsonwebtoken';
+
+// Chave secreta para assinar JWT (em produção, usar variável de ambiente)
+const JWT_SECRET = process.env.JWT_SECRET || 'lasTortillas2025-secret-key';
+const JWT_EXPIRES_IN = '24h'; // Token expira em 24 horas
+
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -40,6 +46,29 @@ export default async function handler(req, res) {
 
     // Credenciais corretas do restaurante Las Tortillas
     if (username === 'administrador' && password === 'lasTortillas2025!') {
+      // Gerar JWT real
+      const token = jwt.sign(
+        {
+          id: 1,
+          username: 'administrador',
+          role: 'admin',
+          name: 'Administrador'
+        },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+
+      // Gerar refresh token (válido por 7 dias)
+      const refreshToken = jwt.sign(
+        {
+          id: 1,
+          username: 'administrador',
+          type: 'refresh'
+        },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
       res.status(200).json({
         success: true,
         user: {
@@ -48,10 +77,35 @@ export default async function handler(req, res) {
           role: 'admin',
           name: 'Administrador'
         },
-        token: 'fake-jwt-admin-token',
+        token,
+        refreshToken,
+        expiresIn: 24 * 60 * 60, // 24 horas em segundos
         message: 'Login realizado com sucesso'
       });
     } else if (username === 'cozinha' && password === 'lasTortillas2025Cozinha!') {
+      // Gerar JWT real
+      const token = jwt.sign(
+        {
+          id: 2,
+          username: 'cozinha',
+          role: 'cozinha',
+          name: 'Cozinha'
+        },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+
+      // Gerar refresh token (válido por 7 dias)
+      const refreshToken = jwt.sign(
+        {
+          id: 2,
+          username: 'cozinha',
+          type: 'refresh'
+        },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
       res.status(200).json({
         success: true,
         user: {
@@ -60,7 +114,9 @@ export default async function handler(req, res) {
           role: 'cozinha',
           name: 'Cozinha'
         },
-        token: 'fake-jwt-cozinha-token',
+        token,
+        refreshToken,
+        expiresIn: 24 * 60 * 60, // 24 horas em segundos
         message: 'Login realizado com sucesso'
       });
     } else {
