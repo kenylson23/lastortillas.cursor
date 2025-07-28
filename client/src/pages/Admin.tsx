@@ -30,7 +30,13 @@ export default function Admin() {
   }
 
   if (!isAuthenticated) {
-    return null; // Will redirect to login
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">Acesso não autorizado. Redirecionando...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleLogout = () => {

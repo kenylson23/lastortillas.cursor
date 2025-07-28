@@ -43,6 +43,8 @@ export default function Login() {
           } else {
             setLocation('/cozinha');
           }
+          // Forçar reload após redirecionamento
+          setTimeout(() => window.location.reload(), 300);
         }, 1000);
       } else {
         console.log('Credenciais inválidas:', data.message);
