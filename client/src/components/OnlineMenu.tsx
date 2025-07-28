@@ -284,7 +284,6 @@ export default function OnlineMenu({
   const { data: availableTables = [], isLoading: tablesLoading, refetch: refetchTables } = useQuery({
     queryKey: ['/api/tables', locationId],
     queryFn: async () => {
-      console.log('🔍 Fetching tables for location:', locationId);
       const response = await fetch(`/api/tables?location=${locationId}`);
       console.log('📡 Tables response status:', response.status);
       if (!response.ok) {
@@ -292,9 +291,16 @@ export default function OnlineMenu({
       }
       const data = await response.json();
       console.log('📊 Tables data received:', data);
-      console.log('📊 Tables data length:', data.length);
-      console.log('📊 Available tables:', data.filter((t: any) => t.status === 'available'));
-      return data;
+      console.log('📊 Tables data length:', data?.length || 0);
+      
+      // Verificar se data é um array antes de usar filter
+      if (Array.isArray(data)) {
+        console.log('📊 Available tables:', data.filter((t: any) => t.status === 'available'));
+        return data;
+      } else {
+        console.error('📊 Tables data is not an array:', data);
+        return [];
+      }
     },
     staleTime: 5 * 1000, // 5 segundos para debug
     refetchOnWindowFocus: true,
@@ -352,9 +358,19 @@ export default function OnlineMenu({
     }
   });
 
-  const categories: string[] = ['Todos', ...Array.from(new Set(menuItems.map((item: MenuItem) => item.category)))];
+  const categories: string[] = ['Todos', ...Array.from(new Set(
+    Array.isArray(menuItems) 
+      ? menuItems.map((item: MenuItem) => item.category)
+      : []
+  ))];
 
   const filteredItems = useMemo(() => {
+    // Verificar se menuItems é um array
+    if (!Array.isArray(menuItems)) {
+      console.error('menuItems is not an array:', menuItems);
+      return [];
+    }
+    
     let items = selectedCategory === 'Todos' 
       ? menuItems
       : menuItems.filter((item: MenuItem) => item.category === selectedCategory);

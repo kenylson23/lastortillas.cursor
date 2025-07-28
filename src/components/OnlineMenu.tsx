@@ -199,19 +199,23 @@ export default function OnlineMenu({
     }
   });
 
-  const categories = ['Todos', ...Array.from(new Set(menuItems.map((item: MenuItem) => item.category)))];
+  const categories = ['Todos', ...Array.from(new Set(
+    Array.isArray(menuItems) 
+      ? menuItems.map((item: MenuItem) => item.category)
+      : []
+  ))];
 
   // Filtrar por categoria e busca
-  const filteredItems = menuItems.filter((item: MenuItem) => {
+  const filteredItems = Array.isArray(menuItems) ? menuItems.filter((item: MenuItem) => {
     const matchesCategory = selectedCategory === 'Todos' || item.category === selectedCategory;
     const matchesSearch = searchTerm === '' || 
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
-  });
+  }) : [];
 
   // Itens populares (para sugestões rápidas)
-  const popularItems = menuItems.slice(0, 4);
+  const popularItems = Array.isArray(menuItems) ? menuItems.slice(0, 4) : [];
 
   // Debug logs (temporarily enabled for troubleshooting)
   console.log('OnlineMenu - menuItems:', menuItems);
