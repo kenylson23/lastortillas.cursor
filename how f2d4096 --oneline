@@ -1,0 +1,15 @@
+* [33m2de12c5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: Adiciona endpoint de teste para verificar proteção automática do Vercel
+* [33m7f4545a[m fix: Simplifica vercel.json para remover proteção automática dos endpoints
+* [33m7335c35[m fix: Adiciona rotas específicas para API no vercel.json para resolver erro 404
+* [33m6361529[m fix: Corrige configuração do Tailwind CSS com arquivos específicos para pasta client
+* [33m4fb02d2[m fix: Corrige PostCSS config para ES modules
+* [33m1254ab9[m fix: Corrige configuração do PostCSS para compatibilidade com Tailwind CSS
+* [33ma84e118[m fix: Corrige configuração do Tailwind CSS e Vite para pasta client/src
+* [33m9c47955[m fix: Move hero image to client/src/assets and update all imports
+* [33me60ceae[m fix: Corrige imports de imagens em Hero.tsx e OptimizedHero.tsx para usar caminhos relativos
+* [33mf903cf8[m fix: Corrige import da imagem hero para usar caminho relativo
+* [33m24412b4[m fix: Remove reload forçado após login para evitar erro de removeChild
+* [33m9a0abec[m fix(vercel): remove 'functions' para compatibilidade com builds
+* [33ma20a053[m chore: Atualiza scripts do package.json para monorepo SPA + API Routes (Vite + Vercel)
+* [33md849f6f[m chore: Atualiza vercel.json para build SPA em client/dist e API Routes .ts
+* [33m4c2cd0b[m chore: Limpeza de scripts e dependências do Express no package.json
