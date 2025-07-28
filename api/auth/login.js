@@ -38,20 +38,20 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Credenciais corretas do seu restaurante
-    if (username === 'admin' && password === 'admin123') {
+    // Credenciais corretas do restaurante Las Tortillas
+    if (username === 'administrador' && password === 'lasTortillas2025!') {
       res.status(200).json({
         success: true,
         user: {
           id: 1,
-          username: 'admin',
+          username: 'administrador',
           role: 'admin',
           name: 'Administrador'
         },
         token: 'fake-jwt-admin-token',
         message: 'Login realizado com sucesso'
       });
-    } else if (username === 'cozinha' && password === 'cozinha123') {
+    } else if (username === 'cozinha' && password === 'lasTortillas2025Cozinha!') {
       res.status(200).json({
         success: true,
         user: {
