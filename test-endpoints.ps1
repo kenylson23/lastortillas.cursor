@@ -1,7 +1,7 @@
 # Script para testar endpoints de autenticação
-$baseUrl = "https://lastortillas-cursor-a7lfmgpoh-kenylson23s-projects.vercel.app"
+$baseUrl = "https://lastortillas-cursor-1ms68dud3-kenylson23s-projects.vercel.app"
 
-Write-Host "🧪 Testando endpoints de autenticação..." -ForegroundColor Yellow
+Write-Host "🧪 Testando endpoints de autenticação (TypeScript)..." -ForegroundColor Yellow
 Write-Host ""
 
 # Teste 1: Endpoint de teste simples
