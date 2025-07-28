@@ -1,4 +1,6 @@
-module.exports = (req, res) => {
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+export default function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -11,10 +13,10 @@ module.exports = (req, res) => {
 
   res.status(200).json({
     status: 'OK',
-    message: 'Auth test endpoint working',
+    message: 'Auth test endpoint working (TypeScript)',
     timestamp: new Date().toISOString(),
     method: req.method,
     url: req.url,
     path: req.url
   });
-}; 
+} 

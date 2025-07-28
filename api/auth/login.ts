@@ -1,10 +1,11 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Chave secreta para assinar JWT (em produção, usar variável de ambiente)
 const JWT_SECRET = process.env.JWT_SECRET || 'lasTortillas2025-secret-key';
 const JWT_EXPIRES_IN = '24h'; // Token expira em 24 horas
 
-module.exports = async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');

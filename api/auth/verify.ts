@@ -1,8 +1,9 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'lasTortillas2025-secret-key';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -44,7 +45,7 @@ module.exports = async function handler(req, res) {
 
     // Verificar JWT
     try {
-      const decoded = jwt.verify(token, JWT_SECRET);
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
       
       // Verificar se não é um refresh token
       if (decoded.type === 'refresh') {
@@ -66,7 +67,7 @@ module.exports = async function handler(req, res) {
         },
         message: 'Token válido'
       });
-    } catch (jwtError) {
+    } catch (jwtError: any) {
       if (jwtError.name === 'TokenExpiredError') {
         res.status(401).json({
           error: 'Unauthorized',
