@@ -28,16 +28,15 @@
       "@/types/*": ["./types/*"]
     }
   },
-                "include": [
-                "api/**/*.ts",
-                "server/**/*.ts",
-                "shared/**/*.ts",
-                "client/**/*.ts",
-                "client/**/*.tsx",
-                "types/**/*.d.ts",
-                "types/**/*.ts",
-                "*.ts"
-              ],
+  "include": [
+    "api/**/*.ts",
+    "shared/**/*.ts",
+    "client/**/*.ts",
+    "client/**/*.tsx",
+    "types/**/*.d.ts",
+    "types/**/*.ts",
+    "*.ts"
+  ],
   "exclude": [
     "node_modules",
     "dist",
